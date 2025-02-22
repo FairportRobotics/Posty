@@ -1,5 +1,4 @@
-# Potential Octo Eureka(POE)
-The official library for Team 578 R3 - Red Raider Robotics
+# Posty
 
 # Including in FRC Project
 To include this library in a Java FRC Robot project. 
