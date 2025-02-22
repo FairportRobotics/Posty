@@ -6,6 +6,8 @@
  * User Manual available at https://docs.gradle.org/7.4.2/userguide/building_java_projects.html
  */
 
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
@@ -18,8 +20,6 @@ repositories {
     mavenLocal()
     gradlePluginPortal()
 
-    maven {url "https://maven.photonvision.org/repository/snapshots"}
-    maven {url "https://maven.photonvision.org/repository/internal"}
     maven {url "https://maven.ctr-electronics.com/release/"}
     maven { url = uri('https://maven.revrobotics.com/') }
 
@@ -30,6 +30,26 @@ repositories {
             password = "\u0067\u0068\u0070\u005f\u006e\u0056\u0051\u006a\u0055\u004f\u004c\u0061\u0079\u0066\u006e\u0078\u006e\u0037\u0051\u0049\u0054\u0042\u0032\u004c\u004a\u006d\u0055\u0070\u0073\u0031\u006d\u0037\u004c\u005a\u0030\u0076\u0062\u0070\u0063\u0051"
         }
     }
+
+    String frcYear = '2025'
+        File frcHome
+        if (OperatingSystem.current().isWindows()) {
+            String publicFolder = System.getenv('PUBLIC')
+            if (publicFolder == null) {
+                publicFolder = "C:\\Users\\Public"
+            }
+            def homeRoot = new File(publicFolder, "wpilib")
+            frcHome = new File(homeRoot, frcYear)
+        } else {
+            def userFolder = System.getProperty("user.home")
+            def homeRoot = new File(userFolder, "wpilib")
+            frcHome = new File(homeRoot, frcYear)
+        }
+        def frcHomeMaven = new File(frcHome, 'maven')
+        maven {
+            name 'frcHome'
+            url frcHomeMaven
+        }
 }
 
 dependencies {
@@ -54,20 +74,16 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind:2.10.0"
     implementation 'edu.wpi.first.thirdparty.frc2022.opencv:opencv-java:4.5.2-1'
 
-    // CTRE Phoenix
-    implementation "com.ctre.phoenix6:wpiapi-java:${ctrePheonix6Version}"
+    //// CTRE Phoenix
+    //implementation "com.ctre.phoenix6:wpiapi-java:${ctrePheonix6Version}"
+    //
+    //// REV
+    //implementation "com.revrobotics.frc:REVLib-java:${revVersion}"
 
-    // REV
-    implementation "com.revrobotics.frc:REVLib-java:${revVersion}"
-
-    // PhotonVision
-    implementation "org.photonvision:PhotonLib-java:${photonVisionVersion}"
-    implementation "org.photonvision:PhotonTargeting-java:${photonVisionVersion}"
-
-    // AdvantageKit
-    implementation "org.littletonrobotics.akit.junction:wpilib-shim:${advantageKitVersion}"
-    implementation "org.littletonrobotics.akit.junction:junction-core:${advantageKitVersion}"
-    implementation "org.littletonrobotics.akit.conduit:conduit-api:${advantageKitVersion}"
+    //// AdvantageKit
+    //implementation "org.littletonrobotics.akit.junction:wpilib-shim:${advantageKitVersion}"
+    //implementation "org.littletonrobotics.akit.junction:junction-core:${advantageKitVersion}"
+    //implementation "org.littletonrobotics.akit.conduit:conduit-api:${advantageKitVersion}"
 }
 
 tasks.named('test') {
