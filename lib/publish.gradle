@@ -1,0 +1,73 @@
+import org.gradle.internal.os.OperatingSystem
+
+apply plugin: 'maven-publish'
+
+ext.licenseFile = files("$rootDir/LICENSE.txt")
+
+def outputsFolder = file("$buildDir/allOutputs")
+
+def versionFile = file("$outputsFolder/version.txt")
+
+def artifactGroupId = 'org.fairportrobotics.posty'
+def baseArtifactId = 'posty-lib'
+def zipBaseName = "_GROUP_org_fairportrobotics_posty_ID_${baseArtifactId}-java_CLS"
+def javaBaseName = "_GROUP_org_fairportrobotics_posty_ID_${baseArtifactId}-java_CLS"
+
+def releasesRepoUrl = "$buildDir/repos/releases"
+
+File frcHome
+if (OperatingSystem.current().isWindows()) {
+    String publicFolder = System.getenv('PUBLIC')
+    if (publicFolder == null) {
+        publicFolder = "C:\\Users\\Public"
+    }
+    def homeRoot = new File(publicFolder, "wpilib")
+    frcHome = new File(homeRoot, "${frcYear}")
+} else {
+    def userFolder = System.getProperty("user.home")
+    def homeRoot = new File(userFolder, "wpilib")
+    frcHome = new File(homeRoot, "${frcYear}")
+}
+def frcHomeMaven = new File(frcHome, 'maven')
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/FairportRobotics/posty")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
+
+        maven {
+            name 'frcHome'
+            url frcHomeMaven
+        }
+    }
+}
+
+task cleanReleaseRepo(type: Delete) {
+    delete releasesRepoUrl
+}
+
+tasks.matching {it != cleanReleaseRepo}.all {it.dependsOn cleanReleaseRepo}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+    archiveClassifier = "sources"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact sourceJar
+            artifactId = "${baseArtifactId}-java"
+            groupId artifactGroupId
+            version = project.hasProperty('release') ? "${pubVersion}" : "${pubVersion}-SNAPSHOT"
+
+            from components.java
+        }
+    }
+}

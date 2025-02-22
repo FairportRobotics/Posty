@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.fairportrobotics.frc.poe.LibraryTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2024-01-13T02:44:41" hostname="khonshu" time="0.008">
+  <properties/>
+  <testcase name="someLibraryMethodReturnsTrue()" classname="org.fairportrobotics.frc.poe.LibraryTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
