@@ -10,7 +10,7 @@ import org.gradle.internal.os.OperatingSystem
 
 plugins {
     // Apply the java-library plugin for API and implementation separation.
-    id 'java-library'
+    id 'java'
     id 'edu.wpi.first.GradleRIO' version "${wpiVersion}"
 }
 
