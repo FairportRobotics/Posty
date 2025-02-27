@@ -2,7 +2,12 @@ package org.fairportrobotics.frc.posty;
 
 import java.util.ArrayList;
 
+import org.fairportrobotics.frc.posty.exception.PostyTimeoutException;
+
 public class PostyManager {
+
+  private Thread postTestRunnerThread;
+  private Thread bitTestRunnerThread;
 
   private ArrayList<TestableSubsystem> m_registeredSubsystem;
 
@@ -15,15 +20,33 @@ public class PostyManager {
   }
 
   public void runAllPOSTs(){
-    for(TestableSubsystem subsystem : m_registeredSubsystem){
-      subsystem.runPOST();
-    }
+  
+    postTestRunnerThread = new Thread(() -> {
+      for(TestableSubsystem subsystem : m_registeredSubsystem){
+        try{
+          subsystem.runPOST();
+        }catch(PostyTimeoutException ex){
+
+        }
+      }
+    });
+
+    postTestRunnerThread.start();
+
   }
 
   public void runAllBITs(){
-    for(TestableSubsystem subsystem : m_registeredSubsystem){
-      subsystem.runBIT();
-    }
+    bitTestRunnerThread = new Thread(() -> {
+      for(TestableSubsystem subsystem : m_registeredSubsystem){
+        try{
+          subsystem.runBIT();
+        }catch(PostyTimeoutException ex){
+          ex.printStackTrace();
+        }
+      }
+    });
+
+    bitTestRunnerThread.start();
   }
 
   private static PostyManager INSTANCE;

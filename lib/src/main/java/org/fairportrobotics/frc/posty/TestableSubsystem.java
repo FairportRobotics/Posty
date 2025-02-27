@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.ArrayList;
 
-import org.ejml.simple.UnsupportedOperation;
+import org.fairportrobotics.frc.posty.exception.PostyTimeoutException;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -12,21 +12,21 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 public abstract class TestableSubsystem extends SubsystemBase{
 
   @FunctionalInterface
-  public interface POSTTestRunner{
-    boolean postTest();
+  public interface TestRunner{
+    boolean test() throws PostyTimeoutException;
   }
 
   @FunctionalInterface
-  public interface BITTestRunner {
-    boolean bitTest();
+  public interface TestCondition{
+    boolean condition();
   }
 
   private class POSTTest{
     String name;
-    POSTTestRunner testRunner;
+    TestRunner testRunner;
     Alert testAlert;
 
-    public POSTTest(String testName, POSTTestRunner testRunner, Alert testAlert){
+    public POSTTest(String testName, TestRunner testRunner, Alert testAlert){
       this.name = testName;
       this.testRunner = testRunner;
       this.testAlert = testAlert;
@@ -35,10 +35,10 @@ public abstract class TestableSubsystem extends SubsystemBase{
 
   private class BITTest{
     String name;
-    BITTestRunner testRunner;
+    TestRunner testRunner;
     Alert testAlert;
 
-    public BITTest(String testName, BITTestRunner testRunner, Alert testAlert){
+    public BITTest(String testName, TestRunner testRunner, Alert testAlert){
       this.name = testName;
       this.testRunner = testRunner;
       this.testAlert = testAlert;
@@ -68,7 +68,7 @@ public abstract class TestableSubsystem extends SubsystemBase{
    */
   public boolean onBuiltInTest(){ return true; }
 
-  public void runPOST(){
+  public void runPOST() throws PostyTimeoutException{
 
     Boolean postFailed = false;
 
@@ -79,7 +79,7 @@ public abstract class TestableSubsystem extends SubsystemBase{
     }
 
     for(POSTTest pTest : m_POSTTests){
-      boolean testPassed = pTest.testRunner.postTest();
+      boolean testPassed = pTest.testRunner.test();
       if(!testPassed)
         pTest.testAlert.set(true);
       postFailed |= !testPassed;
@@ -93,7 +93,7 @@ public abstract class TestableSubsystem extends SubsystemBase{
 
   }
 
-  public void runBIT(){
+  public void runBIT() throws PostyTimeoutException{
 
     Boolean bitFailed = false;
 
@@ -104,7 +104,7 @@ public abstract class TestableSubsystem extends SubsystemBase{
     }
 
     for(BITTest bTest : m_BITTests){
-      boolean testPassed = bTest.testRunner.bitTest();
+      boolean testPassed = bTest.testRunner.test();
       if(!testPassed)
         bTest.testAlert.set(true);
       bitFailed |= !testPassed;
@@ -127,7 +127,7 @@ public abstract class TestableSubsystem extends SubsystemBase{
    * @param postTest The runnable that defines the test. Should return true if the test passes, false if the test fails
    * @param alertType The type of alert to display when the test fails
    */
-  protected void registerPOSTTest(String testName, POSTTestRunner postTest, AlertType alertType){
+  protected void registerPOSTTest(String testName, TestRunner postTest, AlertType alertType){
     m_POSTTests.add(new POSTTest(testName, postTest, new Alert(getName() + ":" + testName, alertType)));
   }
 
@@ -139,7 +139,7 @@ public abstract class TestableSubsystem extends SubsystemBase{
    * @param testName The name of this test
    * @param postTest The runnable that defines the test. Should return true if the test passes, false if the test fails
    */
-  protected void registerPOSTTest(String testName, POSTTestRunner postTest){
+  protected void registerPOSTTest(String testName, TestRunner postTest){
     m_POSTTests.add(new POSTTest(testName, postTest, new Alert(getName() + ":" + testName, AlertType.kError)));
   }
 
@@ -152,7 +152,7 @@ public abstract class TestableSubsystem extends SubsystemBase{
    * @param bitTest The runnable that defines the test. Should return true if the test passes, false if the test fails
    * @param alertType The type of alert to display when the test fails
    */
-  protected void registerBITTest(String testName, BITTestRunner bitTest, AlertType alertType){
+  protected void registerBITTest(String testName, TestRunner bitTest, AlertType alertType){
     m_BITTests.add(new BITTest(testName, bitTest, new Alert(getName() + ":" + testName, alertType)));
   }
 
@@ -164,8 +164,21 @@ public abstract class TestableSubsystem extends SubsystemBase{
    * @param testName The name of this test
    * @param bitTest The runnable that defines the test. Should return true if the test passes, false if the test fails
    */
-  protected void registerBITTest(String testName, BITTestRunner bitTest){
+  protected void registerBITTest(String testName, TestRunner bitTest){
     m_BITTests.add(new BITTest(testName, bitTest, new Alert(getName() + ":" + testName, AlertType.kError)));
+  }
+
+  protected void waitForCondition(TestCondition condition) throws PostyTimeoutException{
+    waitForCondition(condition, 3600);
+  }
+
+  protected void waitForCondition(TestCondition condition, int timeout) throws PostyTimeoutException{
+    long startTime = System.currentTimeMillis();
+    while(!condition.condition()){
+      if(System.currentTimeMillis() - startTime >= (timeout * 1000)){
+        throw new PostyTimeoutException();
+      }
+    }
   }
 
   protected void throwError(String msg){
