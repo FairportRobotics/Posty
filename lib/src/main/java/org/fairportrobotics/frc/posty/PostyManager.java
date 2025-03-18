@@ -3,53 +3,58 @@ package org.fairportrobotics.frc.posty;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.fairportrobotics.frc.posty.exception.PostyTimeoutException;
-
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import org.fairportrobotics.frc.posty.test.BaseTest;
 
 public class PostyManager {
 
   private Thread postTestRunnerThread;
   private Thread bitTestRunnerThread;
 
-  private HashMap<String, ArrayList<Command>> postCommands;
-  private HashMap<String, ArrayList<Command>> bitCommands;
+  private HashMap<String, ArrayList<BaseTest>> postCommands;
+  private HashMap<String, ArrayList<BaseTest>> bitCommands;
 
   public PostyManager(){
     postCommands = new HashMap<>();
     bitCommands = new HashMap<>();
   }
 
-  public boolean addPOST(String subsystemName, Command postCommand){
+  public boolean addPOST(TestableSubsystem subsystem, BaseTest postTest){
+    return addPOST(subsystem.getName(), postTest);
+  }
+
+  public boolean addPOST(String subsystemName, BaseTest postTest){
     if(!postCommands.containsKey(subsystemName)){
       postCommands.put(subsystemName, new ArrayList<>());
     }
 
-    return postCommands.get(subsystemName).add(postCommand);
+    return postCommands.get(subsystemName).add(postTest);
   }
 
-  public boolean addBIT(String subsystemName, Command bitCommand){
+  public boolean addBIT(TestableSubsystem subsystem, BaseTest bitTest){
+    return addBIT(subsystem.getName(), bitTest);
+  }
+
+  public boolean addBIT(String subsystemName, BaseTest bitTest){
     if(!bitCommands.containsKey(subsystemName)){
       bitCommands.put(subsystemName, new ArrayList<>());
     }
 
-    return bitCommands.get(subsystemName).add(bitCommand);
+    return bitCommands.get(subsystemName).add(bitTest);
   }
 
   public void runAllPOSTs(){
   
     postTestRunnerThread = new Thread(() -> {
-      for(ArrayList<Command> subsystemCommands : postCommands.values()){
-        for(Command command : subsystemCommands){
+      for(ArrayList<BaseTest> subsystemTests : postCommands.values()){
+        for(BaseTest test : subsystemTests){
 
-          command.initialize();
+          test.initialize();
 
           do{
-            command.execute();
-          }while(!command.isFinished());
+            test.execute();
+          }while(!test.isFinished());
 
-          command.end(false);
+          test.end();
 
         }
       }
@@ -61,16 +66,16 @@ public class PostyManager {
 
   public void runAllBITs(){
     bitTestRunnerThread = new Thread(() -> {
-      for(ArrayList<Command> subsystemCommands : bitCommands.values()){
-        for(Command command : subsystemCommands){
+      for(ArrayList<BaseTest> subsystemTests : bitCommands.values()){
+        for(BaseTest test : subsystemTests){
 
-          command.initialize();
+          test.initialize();
 
           do{
-            command.execute();
-          }while(!command.isFinished());
+            test.execute();
+          }while(!test.isFinished());
 
-          command.end(false);
+          test.end();
 
         }
       }
