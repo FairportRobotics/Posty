@@ -1,5 +1,7 @@
 package org.fairportrobotics.frc.posty;
 
+import org.fairportrobotics.frc.posty.test.BaseTest;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -9,11 +11,12 @@ public abstract class TestableSubsystem extends SubsystemBase{
     this.setName(this.getClass().getName());
   }
 
-  protected void registerPOST(Command postCommand){
+  protected void registerPOST(BaseTest postTest){
+    PostyManager.getInstance().addPOST(getName(), postTest);
   }
 
-  protected void registerBIT(Command bitCommand){
-
+  protected void registerBIT(BaseTest bitTest){
+    PostyManager.getInstance().addBIT(getName(), bitTest);
   }
 
 }
