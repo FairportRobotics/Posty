@@ -82,13 +82,15 @@ public abstract class TestableSubsystem extends SubsystemBase{
       boolean testPassed = pTest.testRunner.test();
       if(!testPassed)
         pTest.testAlert.set(true);
+      else{
+      }
       postFailed |= !testPassed;
     }
 
     if(postFailed){
-      Alert alert = new Alert(getName(), "POST Failed", AlertType.kError);
-      alert.set(true);
-      alert.close();
+      new Alert(getName(), "POST Failed", AlertType.kError).set(true);
+    }else{
+      new Alert(getName(), "POST Passed", AlertType.kInfo).set(true);
     }
 
   }
@@ -97,6 +99,8 @@ public abstract class TestableSubsystem extends SubsystemBase{
 
     Boolean bitFailed = false;
 
+    System.out.println("Starting BIT tests for " + this.getName());
+
     try{
         bitFailed |= !onBuiltInTest();
     }catch(UnsupportedOperationException ex){
@@ -104,17 +108,24 @@ public abstract class TestableSubsystem extends SubsystemBase{
     }
 
     for(BITTest bTest : m_BITTests){
+
+      System.out.println("Starting BIT test " + bTest.name);
+
       boolean testPassed = bTest.testRunner.test();
       if(!testPassed)
         bTest.testAlert.set(true);
       bitFailed |= !testPassed;
+
+      System.out.println("Finished BIT test " + bTest.name + " it " + (testPassed ? "passed" : "failed"));
     }
 
     if(bitFailed){
-      Alert alert = new Alert(getName(), "BIT Failed", AlertType.kError);
-      alert.set(true);
-      alert.close();
+      new Alert(getName(), "BIT Failed", AlertType.kError).set(true);
+    }else{
+      new Alert(getName(), "BIT Passed", AlertType.kInfo).set(true);;
     }
+
+    System.out.println("Finsihed BIT test for " + this.getName());
 
   }
 
@@ -168,17 +179,18 @@ public abstract class TestableSubsystem extends SubsystemBase{
     m_BITTests.add(new BITTest(testName, bitTest, new Alert(getName() + ":" + testName, AlertType.kError)));
   }
 
-  protected void waitForCondition(TestCondition condition) throws PostyTimeoutException{
-    waitForCondition(condition, 3600);
+  protected boolean waitForCondition(TestCondition condition){
+    return waitForCondition(condition, 10);
   }
 
-  protected void waitForCondition(TestCondition condition, int timeout) throws PostyTimeoutException{
+  protected boolean waitForCondition(TestCondition condition, int timeout){
     long startTime = System.currentTimeMillis();
-    while(!condition.condition()){
-      if(System.currentTimeMillis() - startTime >= (timeout * 1000)){
-        throw new PostyTimeoutException();
+    while(System.currentTimeMillis() - startTime <= (timeout * 1000)){
+      if(condition.condition()){
+        return true;
       }
     }
+    return false;
   }
 
   protected void throwError(String msg){
