@@ -4,6 +4,12 @@ import java.util.function.BooleanSupplier;
 
 public abstract class BaseTest{
 
+  private String testName;
+
+  public BaseTest(String testName){
+    this.testName = testName;
+  }
+
   public abstract void initialize();
 
   public abstract void execute();
@@ -11,6 +17,10 @@ public abstract class BaseTest{
   public abstract boolean isFinished();
 
   public abstract void end();
+
+  public String getTestName(){
+    return testName;
+  }
 
   protected boolean waitForCondition(BooleanSupplier condition){
     return waitForCondition(condition, 10);
