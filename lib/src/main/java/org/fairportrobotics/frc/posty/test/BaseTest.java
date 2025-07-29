@@ -1,8 +1,9 @@
 package org.fairportrobotics.frc.posty.test;
 
+import org.assertj.core.api.WithAssertions;
 import java.util.function.BooleanSupplier;
 
-public abstract class BaseTest{
+public abstract class BaseTest implements WithAssertions{
 
   private String testName;
 
