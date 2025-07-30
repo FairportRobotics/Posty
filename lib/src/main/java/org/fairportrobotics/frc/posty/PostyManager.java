@@ -1,6 +1,7 @@
 package org.fairportrobotics.frc.posty;
 
 import org.fairportrobotics.frc.posty.test.PostTest;
+import org.fairportrobotics.frc.posty.exceptions.AssertFailureException;
 import org.fairportrobotics.frc.posty.test.BitTest;
 
 import java.util.ArrayList;
@@ -24,28 +25,45 @@ public class PostyManager {
 
     postTestRunnerThread = new Thread(() -> {
 
+      ArrayList<TestResult> testResults = new ArrayList<>();
+
       for (TestableSubsystem subSys : mSubsystems) {
         Class<?> clazz = subSys.getClass();
 
         for (Method method : clazz.getDeclaredMethods()) {
           if (method.isAnnotationPresent(PostTest.class)) {
             PostTest postTestAnno = method.getAnnotation(PostTest.class);
-
-            if (!postTestAnno.enabled())
-              continue; // Skip test if disabled
+            TestResult res = new TestResult();
+            res.status = TestResult.TestStatus.PASSED;
 
             String testName = postTestAnno.name().isEmpty() ? method.getName() : postTestAnno.name();
+            res.testName = subSys.getSubsystem() + "_" + testName;
+
+            if (!postTestAnno.enabled()){
+              res.status = TestResult.TestStatus.SKIPPED;
+              testResults.add(res);
+              continue; // Skip test if disabled
+            }
 
             method.setAccessible(true);
             try {
               method.invoke(subSys);
             } catch (Exception ex) {
               // Failed to execute test
-              ex.printStackTrace();
+              if (ex.getCause() instanceof AssertFailureException) {
+                // Test assertion failure
+                AssertFailureException assertExcp = (AssertFailureException)ex.getCause();
+
+                res.status = TestResult.TestStatus.FAILED;
+                res.failureReason = assertExcp.getReason();
+              }
             }
+            testResults.add(res);
           }
         }
       }
+
+      printTestResults(testResults);
 
     });
 
@@ -73,6 +91,7 @@ public class PostyManager {
               method.invoke(subSys);
             } catch (Exception ex) {
               // Failed to execute test
+              ex.printStackTrace();
             }
           }
         }
@@ -82,6 +101,26 @@ public class PostyManager {
     bitTestRunnerThread.start();
   }
 
+  private void printTestResults(ArrayList<TestResult> results){
+
+    System.out.println("=====================================");
+    System.out.println("============ Test Results ===========");
+    System.out.println("=====================================");
+
+    for(TestResult res : results ){
+      String statusStr = res.status.toString();
+      System.out.println(res.testName + "\t\t\t\t" + statusStr);
+
+      if(res.status == TestResult.TestStatus.FAILED){
+        System.out.println("\t" + res.failureReason);
+      }
+    }
+
+    System.out.println("=====================================");
+    System.out.println("=====================================");
+
+  }
+
   private static PostyManager INSTANCE;
 
   public static PostyManager getInstance() {
@@ -89,6 +128,18 @@ public class PostyManager {
       INSTANCE = new PostyManager();
 
     return INSTANCE;
+  }
+
+  private class TestResult{
+    public enum TestStatus{
+      PASSED,
+      FAILED,
+      SKIPPED
+    };
+
+    String testName = "";
+    TestStatus status = null;
+    String failureReason = "";
   }
 
 }
