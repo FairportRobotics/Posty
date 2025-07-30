@@ -1,82 +1,80 @@
 package org.fairportrobotics.frc.posty;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import org.fairportrobotics.frc.posty.test.PostTest;
+import org.fairportrobotics.frc.posty.test.BitTest;
 
-import org.fairportrobotics.frc.posty.test.BaseTest;
+import java.util.ArrayList;
+import java.lang.reflect.Method;
 
 public class PostyManager {
 
   private Thread postTestRunnerThread;
   private Thread bitTestRunnerThread;
 
-  private HashMap<String, ArrayList<BaseTest>> postCommands;
-  private HashMap<String, ArrayList<BaseTest>> bitCommands;
+  private ArrayList<TestableSubsystem> mSubsystems = new ArrayList<>();
 
-  public PostyManager(){
-    postCommands = new HashMap<>();
-    bitCommands = new HashMap<>();
+  public PostyManager() {
   }
 
-  public boolean addPOST(TestableSubsystem subsystem, BaseTest postTest){
-    return addPOST(subsystem.getName(), postTest);
+  public void registerSubsystem(TestableSubsystem subSys) {
+    this.mSubsystems.add(subSys);
   }
 
-  public boolean addPOST(String subsystemName, BaseTest postTest){
-    if(!postCommands.containsKey(subsystemName)){
-      postCommands.put(subsystemName, new ArrayList<>());
-    }
+  public void runAllPOSTs() {
 
-    return postCommands.get(subsystemName).add(postTest);
-  }
-
-  public boolean addBIT(TestableSubsystem subsystem, BaseTest bitTest){
-    return addBIT(subsystem.getName(), bitTest);
-  }
-
-  public boolean addBIT(String subsystemName, BaseTest bitTest){
-    if(!bitCommands.containsKey(subsystemName)){
-      bitCommands.put(subsystemName, new ArrayList<>());
-    }
-
-    return bitCommands.get(subsystemName).add(bitTest);
-  }
-
-  public void runAllPOSTs(){
-  
     postTestRunnerThread = new Thread(() -> {
-      for(ArrayList<BaseTest> subsystemTests : postCommands.values()){
-        for(BaseTest test : subsystemTests){
 
-          test.initialize();
+      for (TestableSubsystem subSys : mSubsystems) {
+        Class<?> clazz = subSys.getClass();
 
-          do{
-            test.execute();
-          }while(!test.isFinished());
+        for (Method method : clazz.getDeclaredMethods()) {
+          if (method.isAnnotationPresent(PostTest.class)) {
+            PostTest postTestAnno = method.getAnnotation(PostTest.class);
 
-          test.end();
+            if (!postTestAnno.enabled())
+              continue; // Skip test if disabled
 
+            String testName = postTestAnno.name().isEmpty() ? method.getName() : postTestAnno.name();
+
+            method.setAccessible(true);
+            try {
+              method.invoke(subSys);
+            } catch (Exception ex) {
+              // Failed to execute test
+              ex.printStackTrace();
+            }
+          }
         }
       }
+
     });
 
     postTestRunnerThread.start();
 
   }
 
-  public void runAllBITs(){
+  public void runAllBITs() {
     bitTestRunnerThread = new Thread(() -> {
-      for(ArrayList<BaseTest> subsystemTests : bitCommands.values()){
-        for(BaseTest test : subsystemTests){
 
-          test.initialize();
+      for (TestableSubsystem subSys : mSubsystems) {
+        Class<?> clazz = subSys.getClass();
 
-          do{
-            test.execute();
-          }while(!test.isFinished());
+        for (Method method : clazz.getDeclaredMethods()) {
+          if (method.isAnnotationPresent(BitTest.class)) {
+            BitTest bitTestAnno = method.getAnnotation(BitTest.class);
 
-          test.end();
+            if (!bitTestAnno.enabled())
+              continue; // Skip test if disabled
 
+            String testName = bitTestAnno.name().isEmpty() ? method.getName() : bitTestAnno.name();
+
+            method.setAccessible(true);
+            try {
+              method.invoke(subSys);
+            } catch (Exception ex) {
+              // Failed to execute test
+            }
+          }
         }
       }
     });
@@ -86,8 +84,8 @@ public class PostyManager {
 
   private static PostyManager INSTANCE;
 
-  public static PostyManager getInstance(){
-    if(INSTANCE == null)
+  public static PostyManager getInstance() {
+    if (INSTANCE == null)
       INSTANCE = new PostyManager();
 
     return INSTANCE;
