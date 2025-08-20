@@ -19,22 +19,28 @@ Example subsystem:
 import org.fairportrobotics.frc.posty.TestableSubsystem;
 import org.fairportrobotics.frc.posty.test.PostTest;
 import org.fairportrobotics.frc.posty.test.BitTest;
+import static org.fairportrobotics.frc.posty.assertions.*;
 
 public class ExampleSubsystem extends TestableSubsystem{
 
     public ExampleSubsystem(){
-        super("ExampleSubsystem"); // Setting subsystem name
-
+        super();
+        this.setName("My Cool Subsystem");
     }
 
     @PostTest
-    public void myPostTest() {
+    public void myPassingPostTest() {
+        assertThat("Hello World").startsWith("Hello");
+    }
 
+    @PostTest
+    public void myFailingPostTest() {
+        assertThat(100).isLessThan(50);
     }
 
     @BitTest
     public void myBitTest() {
-
+        assertThat(true).isTrue();
     }
 
 }
