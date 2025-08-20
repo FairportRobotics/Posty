@@ -7,14 +7,16 @@ public class FloatAssertion extends BaseAssert<Float, Float>{
   }
 
   public FloatAssertion isGreaterThan(Float expected){
-    if(this.actual < expected){
+    this.expected = expected;
+    if(this.actual < this.expected){
       fail();
     }
     return this;
   }
 
   public FloatAssertion isLessThan(Float expected){
-    if(this.actual > expected){
+    this.expected = expected;
+    if(this.actual > this.expected){
       fail();
     }
     return this;

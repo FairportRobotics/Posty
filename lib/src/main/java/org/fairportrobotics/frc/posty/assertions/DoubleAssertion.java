@@ -7,14 +7,16 @@ public class DoubleAssertion extends BaseAssert<Double, Double> {
   }
 
   public DoubleAssertion isGreaterThan(Double expected){
-    if(this.actual < expected){
+    this.expected = expected;
+    if(this.actual < this.expected){
       fail();
     }
     return this;
   }
 
   public DoubleAssertion isLessThan(Double expected){
-    if(this.actual > expected){
+    this.expected = expected;
+    if(this.actual > this.expected){
       fail();
     }
     return this;

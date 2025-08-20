@@ -14,11 +14,10 @@ public abstract class BaseAssert<EXPECTED, ACTUAL> {
   }
 
   protected void fail() {
-
     if(failMessage != null){
       failWithMessage(this.failMessage);
     }else{
-      throw new AssertFailureException(String.format("expected: %s was: %s", expected.toString(), actual.toString()));
+      throw new AssertFailureException(String.format("expected: <%s> was: <%s>", expected.toString(), actual.toString()));
     }
   }
 
@@ -27,6 +26,7 @@ public abstract class BaseAssert<EXPECTED, ACTUAL> {
   }
 
   public BaseAssert<EXPECTED, ACTUAL> isEqual(EXPECTED expected){
+    this.expected = expected;
     if(!expected.equals(actual)){
       fail();
     }
@@ -34,6 +34,7 @@ public abstract class BaseAssert<EXPECTED, ACTUAL> {
   }
 
   public BaseAssert<EXPECTED, ACTUAL> isNotEqual(EXPECTED expected){
+    this.expected = expected;
     if(expected.equals(actual)){
       fail();
     }
@@ -42,14 +43,14 @@ public abstract class BaseAssert<EXPECTED, ACTUAL> {
 
   public BaseAssert<EXPECTED, ACTUAL> isNull(){
     if(expected != null){
-      fail();
+      failWithMessage(String.format("expected <%s> to be null", this.actual.toString()));
     }
     return this;
   }
   
   public BaseAssert<EXPECTED, ACTUAL> isNotNull(){
     if(expected == null){
-      fail();
+      failWithMessage(String.format("expected <%s> to not be null", this.actual.toString()));
     }
     return this;
   }

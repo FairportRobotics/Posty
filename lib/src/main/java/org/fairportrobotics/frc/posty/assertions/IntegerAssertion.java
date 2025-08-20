@@ -7,14 +7,16 @@ public class IntegerAssertion extends BaseAssert<Integer, Integer> {
   }
 
   public IntegerAssertion isGreaterThan(Integer expected){
-    if(this.actual < expected){
+    this.expected = expected;
+    if(this.actual < this.expected){
       fail();
     }
     return this;
   }
 
   public IntegerAssertion isLessThan(Integer expected){
-    if(this.actual > expected){
+    this.expected = expected;
+    if(this.actual > this.expected){
       fail();
     }
     return this;

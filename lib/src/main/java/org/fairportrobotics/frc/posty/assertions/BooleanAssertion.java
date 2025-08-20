@@ -7,14 +7,16 @@ public class BooleanAssertion extends BaseAssert<Boolean, Boolean>{
   }
 
   public BooleanAssertion isTrue() {
-    if(this.actual != true){
+    this.expected = true;
+    if(this.actual != this.expected){
       fail();
     }
     return this;
   }
 
   public BooleanAssertion isFalse() {
-    if(this.actual != false){
+    this.expected = false;
+    if(this.actual != this.expected){
       fail();
     }
     return this;

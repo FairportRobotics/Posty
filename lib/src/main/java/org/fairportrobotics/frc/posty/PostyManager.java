@@ -106,14 +106,17 @@ public class PostyManager {
     System.out.println("=====================================");
     System.out.println("============ Test Results ===========");
     System.out.println("=====================================");
+    System.out.format("|%32s|%10s|\n", "Test Name", "Status");
+    System.out.println("|=====================================|");
 
     for(TestResult res : results ){
       String statusStr = res.status.toString();
-      System.out.println(res.testName + "\t\t\t\t" + statusStr);
+      System.out.format("|%32s|%10s|\n", res.testName, statusStr);
 
       if(res.status == TestResult.TestStatus.FAILED){
-        System.out.println("\t" + res.failureReason);
+        System.out.format("|%43s|\n", res.failureReason);
       }
+      System.out.format("|-------------------------------------------|\n", "");
     }
 
     System.out.println("=====================================");
