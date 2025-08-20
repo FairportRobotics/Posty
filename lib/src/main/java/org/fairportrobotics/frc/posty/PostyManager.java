@@ -74,25 +74,38 @@ public class PostyManager {
   public void runAllBITs() {
     bitTestRunnerThread = new Thread(() -> {
 
+      ArrayList<TestResult> testResults = new ArrayList<>();
+
       for (TestableSubsystem subSys : mSubsystems) {
         Class<?> clazz = subSys.getClass();
 
         for (Method method : clazz.getDeclaredMethods()) {
           if (method.isAnnotationPresent(BitTest.class)) {
             BitTest bitTestAnno = method.getAnnotation(BitTest.class);
-
-            if (!bitTestAnno.enabled())
-              continue; // Skip test if disabled
+            TestResult res = new TestResult();
+            res.status = TestResult.TestStatus.PASSED;
 
             String testName = bitTestAnno.name().isEmpty() ? method.getName() : bitTestAnno.name();
+            res.testName = subSys.getSubsystem() + "_" + testName;
+
+            if (!bitTestAnno.enabled()){
+              res.status = TestResult.TestStatus.SKIPPED;
+              testResults.add(res);
+              continue; // Skip test if disabled
+            }
 
             method.setAccessible(true);
             try {
               method.invoke(subSys);
             } catch (Exception ex) {
-              // Failed to execute test
-              ex.printStackTrace();
+              if(ex.getCause() instanceof AssertFailureException) {
+                AssertFailureException assertExcp = (AssertFailureException)ex.getCause();
+
+                res.status = TestResult.TestStatus.FAILED;
+                res.failureReason = assertExcp.getReason();
+              }
             }
+            testResults.add(res);
           }
         }
       }
