@@ -1,0 +1,14 @@
+package org.fairportrobotics.frc.posty.test;
+
+public class TestResult{
+  public enum TestStatus {
+    PASSED,
+    FAILED,
+    SKIPPED
+  };
+
+  public String subsystemName = "";
+  public String testName = "";
+  public TestStatus status = null;
+  public String failureReason = "";
+}

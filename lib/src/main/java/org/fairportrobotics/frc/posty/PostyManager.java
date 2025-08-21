@@ -3,14 +3,20 @@ package org.fairportrobotics.frc.posty;
 import org.fairportrobotics.frc.posty.test.PostTest;
 import org.fairportrobotics.frc.posty.exceptions.AssertFailureException;
 import org.fairportrobotics.frc.posty.test.BitTest;
+import org.fairportrobotics.frc.posty.test.TestResult;
+import org.fairportrobotics.frc.posty.test.resultwriters.BaseResultWriter;
+import org.fairportrobotics.frc.posty.test.resultwriters.ConsoleWriter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.lang.reflect.Method;
 
 public class PostyManager {
 
   private Thread postTestRunnerThread;
   private Thread bitTestRunnerThread;
+
+  private ArrayList<BaseResultWriter> testResultWriters = new ArrayList<BaseResultWriter>(Arrays.asList(new ConsoleWriter()));
 
   private ArrayList<TestableSubsystem> mSubsystems = new ArrayList<>();
 
@@ -37,7 +43,8 @@ public class PostyManager {
             res.status = TestResult.TestStatus.PASSED;
 
             String testName = postTestAnno.name().isEmpty() ? method.getName() : postTestAnno.name();
-            res.testName = subSys.getSubsystem() + "_" + testName;
+            res.subsystemName = subSys.getSubsystem();
+            res.testName = testName;
 
             if (!postTestAnno.enabled()){
               res.status = TestResult.TestStatus.SKIPPED;
@@ -63,7 +70,9 @@ public class PostyManager {
         }
       }
 
-      printTestResults(testResults);
+      for(BaseResultWriter writer : testResultWriters){
+        writer.writePOSTResults(testResults.toArray(new TestResult[testResults.size()]));
+      }
 
     });
 
@@ -86,7 +95,8 @@ public class PostyManager {
             res.status = TestResult.TestStatus.PASSED;
 
             String testName = bitTestAnno.name().isEmpty() ? method.getName() : bitTestAnno.name();
-            res.testName = subSys.getSubsystem() + "_" + testName;
+            res.subsystemName = subSys.getName();
+            res.testName = testName;
 
             if (!bitTestAnno.enabled()){
               res.status = TestResult.TestStatus.SKIPPED;
@@ -109,32 +119,14 @@ public class PostyManager {
           }
         }
       }
+
+      for(BaseResultWriter writer : testResultWriters){
+        writer.writeBITResults(testResults.toArray(new TestResult[testResults.size()]));
+      }
+
     });
 
     bitTestRunnerThread.start();
-  }
-
-  private void printTestResults(ArrayList<TestResult> results){
-
-    System.out.println("=====================================");
-    System.out.println("============ Test Results ===========");
-    System.out.println("=====================================");
-    System.out.format("|%32s|%10s|\n", "Test Name", "Status");
-    System.out.println("|=====================================|");
-
-    for(TestResult res : results ){
-      String statusStr = res.status.toString();
-      System.out.format("|%32s|%10s|\n", res.testName, statusStr);
-
-      if(res.status == TestResult.TestStatus.FAILED){
-        System.out.format("|%43s|\n", res.failureReason);
-      }
-      System.out.format("|-------------------------------------------|\n", "");
-    }
-
-    System.out.println("=====================================");
-    System.out.println("=====================================");
-
   }
 
   private static PostyManager INSTANCE;
@@ -144,18 +136,6 @@ public class PostyManager {
       INSTANCE = new PostyManager();
 
     return INSTANCE;
-  }
-
-  private class TestResult{
-    public enum TestStatus{
-      PASSED,
-      FAILED,
-      SKIPPED
-    };
-
-    String testName = "";
-    TestStatus status = null;
-    String failureReason = "";
   }
 
 }
