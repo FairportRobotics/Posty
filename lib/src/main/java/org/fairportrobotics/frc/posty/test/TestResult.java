@@ -11,4 +11,8 @@ public class TestResult{
   public String testName = "";
   public TestStatus status = null;
   public String failureReason = "";
+
+  public String toJSON(){
+    return String.format("{\"testName\": \"%s\", \"subsystemName\", \"result\": \"%s\", \"failReason\": \"%s\"}", testName, subsystemName, status.toString(), failureReason);
+  }
 }

@@ -6,6 +6,7 @@ import org.fairportrobotics.frc.posty.test.BitTest;
 import org.fairportrobotics.frc.posty.test.TestResult;
 import org.fairportrobotics.frc.posty.test.resultwriters.BaseResultWriter;
 import org.fairportrobotics.frc.posty.test.resultwriters.ConsoleWriter;
+import org.fairportrobotics.frc.posty.test.resultwriters.NTWriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +17,7 @@ public class PostyManager {
   private Thread postTestRunnerThread;
   private Thread bitTestRunnerThread;
 
-  private ArrayList<BaseResultWriter> testResultWriters = new ArrayList<BaseResultWriter>(Arrays.asList(new ConsoleWriter()));
+  private ArrayList<BaseResultWriter> testResultWriters = new ArrayList<BaseResultWriter>(Arrays.asList(new ConsoleWriter(), new NTWriter()));
 
   private ArrayList<TestableSubsystem> mSubsystems = new ArrayList<>();
 
