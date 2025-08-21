@@ -25,6 +25,11 @@ public abstract class BaseAssert<EXPECTED, ACTUAL> {
     throw new AssertFailureException(message);
   }
 
+  protected BaseAssert<EXPECTED, ACTUAL> as(String message){
+    this.failMessage = message;
+    return this;
+  }
+
   public BaseAssert<EXPECTED, ACTUAL> isEqual(EXPECTED expected){
     this.expected = expected;
     if(!expected.equals(actual)){
