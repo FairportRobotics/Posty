@@ -1,49 +1,130 @@
 package org.fairportrobotics.frc.posty;
 
-import java.util.ArrayList;
+import org.fairportrobotics.frc.posty.test.PostTest;
+import org.fairportrobotics.frc.posty.exceptions.AssertFailureException;
+import org.fairportrobotics.frc.posty.test.BitTest;
+import org.fairportrobotics.frc.posty.test.TestResult;
+import org.fairportrobotics.frc.posty.test.resultwriters.BaseResultWriter;
+import org.fairportrobotics.frc.posty.test.resultwriters.ConsoleWriter;
+import org.fairportrobotics.frc.posty.test.resultwriters.NTWriter;
 
-import org.fairportrobotics.frc.posty.exception.PostyTimeoutException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.lang.reflect.Method;
 
 public class PostyManager {
 
   private Thread postTestRunnerThread;
   private Thread bitTestRunnerThread;
 
-  private ArrayList<TestableSubsystem> m_registeredSubsystem;
+  private ArrayList<BaseResultWriter> testResultWriters = new ArrayList<BaseResultWriter>(Arrays.asList(new ConsoleWriter(), new NTWriter()));
 
-  public PostyManager(){
-    m_registeredSubsystem = new ArrayList<TestableSubsystem>();
+  private ArrayList<TestableSubsystem> mSubsystems = new ArrayList<>();
+
+  public PostyManager() {
   }
 
-  public void registerSubsystem(TestableSubsystem subsystem){
-    m_registeredSubsystem.add(subsystem);
+  public void registerSubsystem(TestableSubsystem subSys) {
+    this.mSubsystems.add(subSys);
   }
 
-  public void runAllPOSTs(){
-  
+  public void runAllPOSTs() {
+
     postTestRunnerThread = new Thread(() -> {
-      for(TestableSubsystem subsystem : m_registeredSubsystem){
-        try{
-          subsystem.runPOST();
-        }catch(PostyTimeoutException ex){
 
+      ArrayList<TestResult> testResults = new ArrayList<>();
+
+      for (TestableSubsystem subSys : mSubsystems) {
+        Class<?> clazz = subSys.getClass();
+
+        for (Method method : clazz.getDeclaredMethods()) {
+          if (method.isAnnotationPresent(PostTest.class)) {
+            PostTest postTestAnno = method.getAnnotation(PostTest.class);
+            TestResult res = new TestResult();
+            res.status = TestResult.TestStatus.PASSED;
+
+            String testName = postTestAnno.name().isEmpty() ? method.getName() : postTestAnno.name();
+            res.subsystemName = subSys.getSubsystem();
+            res.testName = testName;
+
+            if (!postTestAnno.enabled()){
+              res.status = TestResult.TestStatus.SKIPPED;
+              testResults.add(res);
+              continue; // Skip test if disabled
+            }
+
+            method.setAccessible(true);
+            try {
+              method.invoke(subSys);
+            } catch (Exception ex) {
+              // Failed to execute test
+              if (ex.getCause() instanceof AssertFailureException) {
+                // Test assertion failure
+                AssertFailureException assertExcp = (AssertFailureException)ex.getCause();
+
+                res.status = TestResult.TestStatus.FAILED;
+                res.failureReason = assertExcp.getReason();
+              }
+            }
+            testResults.add(res);
+          }
         }
       }
+
+      for(BaseResultWriter writer : testResultWriters){
+        writer.writePOSTResults(testResults.toArray(new TestResult[testResults.size()]));
+      }
+
     });
 
     postTestRunnerThread.start();
 
   }
 
-  public void runAllBITs(){
+  public void runAllBITs() {
     bitTestRunnerThread = new Thread(() -> {
-      for(TestableSubsystem subsystem : m_registeredSubsystem){
-        try{
-          subsystem.runBIT();
-        }catch(PostyTimeoutException ex){
-          ex.printStackTrace();
+
+      ArrayList<TestResult> testResults = new ArrayList<>();
+
+      for (TestableSubsystem subSys : mSubsystems) {
+        Class<?> clazz = subSys.getClass();
+
+        for (Method method : clazz.getDeclaredMethods()) {
+          if (method.isAnnotationPresent(BitTest.class)) {
+            BitTest bitTestAnno = method.getAnnotation(BitTest.class);
+            TestResult res = new TestResult();
+            res.status = TestResult.TestStatus.PASSED;
+
+            String testName = bitTestAnno.name().isEmpty() ? method.getName() : bitTestAnno.name();
+            res.subsystemName = subSys.getName();
+            res.testName = testName;
+
+            if (!bitTestAnno.enabled()){
+              res.status = TestResult.TestStatus.SKIPPED;
+              testResults.add(res);
+              continue; // Skip test if disabled
+            }
+
+            method.setAccessible(true);
+            try {
+              method.invoke(subSys);
+            } catch (Exception ex) {
+              if(ex.getCause() instanceof AssertFailureException) {
+                AssertFailureException assertExcp = (AssertFailureException)ex.getCause();
+
+                res.status = TestResult.TestStatus.FAILED;
+                res.failureReason = assertExcp.getReason();
+              }
+            }
+            testResults.add(res);
+          }
         }
       }
+
+      for(BaseResultWriter writer : testResultWriters){
+        writer.writeBITResults(testResults.toArray(new TestResult[testResults.size()]));
+      }
+
     });
 
     bitTestRunnerThread.start();
@@ -51,8 +132,8 @@ public class PostyManager {
 
   private static PostyManager INSTANCE;
 
-  public static PostyManager getInstance(){
-    if(INSTANCE == null)
+  public static PostyManager getInstance() {
+    if (INSTANCE == null)
       INSTANCE = new PostyManager();
 
     return INSTANCE;
