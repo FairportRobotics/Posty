@@ -20,11 +20,11 @@ public class Utilities {
    * Blocking wait call until a condition is met or a timeout is exceeded.
    *
    * @param condition BooleanSupplier Condition to wait for
-   * @param timeout int How long to wait before timing out
+   * @param timeout float How long to wait before timing out (in seconds)
    *
    * @return boolean True if condition is met. False otherwise
    */
-  public static boolean waitForCondition(BooleanSupplier condition, int timeout) {
+  public static boolean waitForCondition(BooleanSupplier condition, float timeout) {
     long startTime = System.currentTimeMillis();
     while (System.currentTimeMillis() - startTime <= (timeout * 1000)) {
       if (condition.getAsBoolean()) {
