@@ -13,6 +13,6 @@ public class TestResult{
   public String failureReason = "";
 
   public String toJSON(){
-    return String.format("{\"testName\": \"%s\", \"subsystemName\", \"result\": \"%s\", \"failReason\": \"%s\"}", testName, subsystemName, status.toString(), failureReason);
+    return String.format("{\"testName\": \"%s\", \"subsystemName\": \"%s\", \"result\": \"%s\", \"failReason\": \"%s\"}", testName, subsystemName, status.toString(), failureReason);
   }
 }
