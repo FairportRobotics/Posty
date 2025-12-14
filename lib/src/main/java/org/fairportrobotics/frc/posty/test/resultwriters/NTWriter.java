@@ -30,6 +30,7 @@ public class NTWriter extends BaseResultWriter{
     for(TestResult result : results){
       json = json + result.toJSON() + ",";
     }
+    json = json.substring(0, json.length() - 1);
     json = json + "]";
 
     postResultsTable.putValue("resultsJson", makeString(json));

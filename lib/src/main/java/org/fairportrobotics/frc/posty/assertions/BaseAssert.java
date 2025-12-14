@@ -2,18 +2,19 @@ package org.fairportrobotics.frc.posty.assertions;
 
 import org.fairportrobotics.frc.posty.exceptions.AssertFailureException;
 
-public abstract class BaseAssert<EXPECTED, ACTUAL> {
+public abstract class BaseAssert<SELF extends BaseAssert<SELF, ACTUAL>, ACTUAL> {
 
-  protected EXPECTED expected;
+  protected SELF self;
   protected ACTUAL actual;
 
   private String failMessage = null;
 
   public BaseAssert(ACTUAL actual) {
     this.actual = actual;
+    this.self = (SELF) this;
   }
 
-  protected void fail() {
+  protected void fail(Object expected) {
     if(failMessage != null){
       failWithMessage(this.failMessage);
     }else{
@@ -25,39 +26,37 @@ public abstract class BaseAssert<EXPECTED, ACTUAL> {
     throw new AssertFailureException(message);
   }
 
-  protected BaseAssert<EXPECTED, ACTUAL> as(String message){
+  public SELF as(String message){
     this.failMessage = message;
-    return this;
+    return self;
   }
 
-  public BaseAssert<EXPECTED, ACTUAL> isEqual(EXPECTED expected){
-    this.expected = expected;
+  public SELF isEqual(Object expected){
     if(!expected.equals(actual)){
-      fail();
+      fail(expected);
     }
-    return this;
+    return self;
   }
 
-  public BaseAssert<EXPECTED, ACTUAL> isNotEqual(EXPECTED expected){
-    this.expected = expected;
+  public SELF isNotEqual(Object expected){
     if(expected.equals(actual)){
-      fail();
+      fail(expected);
     }
-    return this;
+    return self;
   }
 
-  public BaseAssert<EXPECTED, ACTUAL> isNull(){
-    if(expected != null){
+  public SELF isNull(){
+    if(actual != null){
       failWithMessage(String.format("expected <%s> to be null", this.actual.toString()));
     }
-    return this;
+    return self;
   }
   
-  public BaseAssert<EXPECTED, ACTUAL> isNotNull(){
-    if(expected == null){
+  public SELF isNotNull(){
+    if(actual == null){
       failWithMessage(String.format("expected <%s> to not be null", this.actual.toString()));
     }
-    return this;
+    return self;
   }
 
 }
