@@ -9,7 +9,7 @@ public class TestResult{
 
   public String subsystemName = "";
   public String testName = "";
-  public TestStatus status = null;
+  public TestStatus status = TestStatus.PASSED;
   public String failureReason = "";
 
   public String toJSON(){
